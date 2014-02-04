@@ -2,9 +2,10 @@
 #include <string.h>
 #include <mpi.h>
 #include <stdlib.h>
+#include <unistd.h>
 const int MAX_STRING = 100;
 int main(int argc, char * argv[]){
-  unsigned int seed = 10;
+  
   char message[2];
   int comm_sz;
   int my_rank;
@@ -13,16 +14,16 @@ int main(int argc, char * argv[]){
   MPI_Init(&argc, &argv);
   MPI_Comm_size(MPI_COMM_WORLD, &comm_sz);
   MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
-  int A[comm_sz];
   
-  int i = 0;
-  for(i = 0; i < comm_sz; i++){
-    A[i] = rand_r(&seed);
-  }
-  min = A[my_rank]%100;
+  unsigned int seed = my_rank;
+  int randnum = rand_r(&seed); 
+  
+  min = randnum%100;
+  printf("%d randomnum\n", randnum % 100);
   max = min;
-  sprintf(message, "%d", A[my_rank]%100);
-  sleep(A[my_rank] % 10);
+  sprintf(message, "%d", min);
+  sleep(randnum%10);
+  int i = 0;
   for(i = 0; i < comm_sz; i++){
     if(i != my_rank){
       
