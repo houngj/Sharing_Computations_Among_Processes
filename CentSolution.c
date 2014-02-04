@@ -8,7 +8,7 @@ const int MAX_STRING = 100;
 int main(int argc, char * argv[]){
   
   
-  char message[2];
+  int message[2];
   int comm_sz; //number of processes
   int my_rank; //my process rank
   int min = 100;
