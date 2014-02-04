@@ -3,12 +3,12 @@
 #include <mpi.h>
 #include <stdlib.h>
 #include <unistd.h>
-
+#include <math.h>
 const int MAX_STRING = 100;
 int main(int argc, char * argv[]){
   
   
-  int message[2];
+  char message[MAX_STRING];
   int comm_sz; //number of processes
   int my_rank; //my process rank
   int min = 100;
@@ -23,7 +23,7 @@ int main(int argc, char * argv[]){
     A[i] = rand_r(&seed);
     
     }*/
-
+  
   if(my_rank != 0){
     sprintf(message, "%d", rand_r(&seed) % 100);
     
@@ -34,7 +34,7 @@ int main(int argc, char * argv[]){
     min = atoi(message);
     MPI_Recv(message, MAX_STRING, MPI_CHAR, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     max = atoi(message);
-    printf("----process-%d seed-%d----\nmin - %d\nmax - %d\n",my_rank, seed, min, max);
+    printf("----process-%02d----min - %d max - %d\n",my_rank, min, max);
   }
   else {
     //printf("%d\n", A[my_rank] % 100);
@@ -54,7 +54,7 @@ int main(int argc, char * argv[]){
       }
       
     }
-    printf("----process-%d seed-%d----\nmin - %d\nmax - %d\n",my_rank, seed, min, max);
+    printf("----process-%02d---- min - %d max - %d\n", my_rank, min, max);
     for(q = 1; q < comm_sz; q++){
       sprintf(message, "%d", min);
       MPI_Send(message, strlen(message)+1, MPI_CHAR, q, 0, MPI_COMM_WORLD);
