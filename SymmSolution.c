@@ -19,7 +19,7 @@ int main(int argc, char * argv[]){
   int randnum = rand_r(&seed); 
   
   min = randnum%100;
-  printf("%d randomnum\n", randnum % 100);
+  
   max = min;
   sprintf(message, "%d", min);
   sleep(randnum%10);
@@ -44,7 +44,7 @@ int main(int argc, char * argv[]){
     }
   }
   
-  printf("--------%d--------\nmin - %d\nmax - %d\n", my_rank, min, max);
+  printf("--------rank-%02d-------- min - %d max - %d\n", my_rank, min, max);
   MPI_Finalize();
   return 0;
 
