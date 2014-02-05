@@ -7,7 +7,7 @@ const int MAX_STRING = 100;
 
 int main(int argc, char *argv[]){
   
-  char message[2];
+  int message;
   int comm_sz;
   int my_rank;
   int min;
@@ -16,67 +16,81 @@ int main(int argc, char *argv[]){
   MPI_Comm_size(MPI_COMM_WORLD, &comm_sz);
   MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
   unsigned int seed = my_rank;
+  double local_start, local_finish, local_elapsed, elapsed, elapsed2;
+  MPI_Barrier(MPI_COMM_WORLD);
+  int randomnum = rand_r(&seed);
+  local_start = MPI_Wtime();
   
-  int randomnum = rand_r(&seed) % 100;
   min = randomnum;
   max = min;
-  sleep(rand_r(&seed) % 10);
+  usleep(rand_r(&seed) % 1000);
   //first phase
   
   
   if(my_rank == 0){
-    sprintf(message, "%d", min);
-    MPI_Send(message, strlen(message)+1, MPI_CHAR, my_rank+1, 0, MPI_COMM_WORLD);
-    sprintf(message, "%d", max);
-    MPI_Send(message, strlen(message)+1, MPI_CHAR, my_rank+1, 0, MPI_COMM_WORLD);
-    MPI_Recv(message, MAX_STRING, MPI_CHAR, comm_sz-1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    min = atoi(message);
-    MPI_Recv(message, MAX_STRING, MPI_CHAR, comm_sz-1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    max = atoi(message);
-    printf("--------rank-%02d-------- min - %d max - %d\n", my_rank, min, max);
+    message = min;
+    MPI_Send(&message, 1, MPI_INT, my_rank+1, 0, MPI_COMM_WORLD);
+    message = max;
+    MPI_Send(&message, 1, MPI_INT, my_rank+1, 0, MPI_COMM_WORLD);
+    MPI_Recv(&message, 1, MPI_INT, comm_sz-1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    min = message;
+    MPI_Recv(&message, 1, MPI_INT, comm_sz-1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    max = message;
+    //printf("--------rank-%02d-------- min - %d max - %d\n", my_rank, min, max);
   } else {
-    MPI_Recv(message, MAX_STRING, MPI_CHAR, my_rank-1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    min = atoi(message);
-    MPI_Recv(message, MAX_STRING, MPI_CHAR, my_rank-1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    max = atoi(message);
+    MPI_Recv(&message, 1, MPI_INT, my_rank-1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    min = message;
+    MPI_Recv(&message, 1, MPI_INT, my_rank-1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    max = message;
     if(randomnum < min){
-      sprintf(message, "%d", randomnum);
+      message = randomnum;
     }
     else{
-      sprintf(message, "%d", min);
+      message = min;
     }
-    MPI_Send(message, strlen(message)+1, MPI_CHAR, (my_rank+1) % comm_sz, 0, MPI_COMM_WORLD);
+    MPI_Send(&message, 1, MPI_INT, (my_rank+1) % comm_sz, 0, MPI_COMM_WORLD);
     if(randomnum > max){
-      sprintf(message, "%d", randomnum);
+      message = randomnum;
     }
     else {
-      sprintf(message, "%d", max);
+      message = max;
     }
-    MPI_Send(message, strlen(message)+1, MPI_CHAR, (my_rank+1) % comm_sz, 0, MPI_COMM_WORLD);
+    MPI_Send(&message, 1, MPI_INT, (my_rank+1) % comm_sz, 0, MPI_COMM_WORLD);
     
     
   }
 
-  //second phase
+  local_finish = MPI_Wtime();
+  local_elapsed = local_finish - local_start;
+  MPI_Reduce(&local_elapsed, &elapsed, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
   
+  //second phase
+  MPI_Barrier(MPI_COMM_WORLD);
+  local_start = MPI_Wtime();
   if(my_rank == 0){
-    sprintf(message, "%d", min);
-    MPI_Send(message, strlen(message)+1, MPI_CHAR, my_rank+1, 0, MPI_COMM_WORLD);
-    sprintf(message, "%d", max);
-    MPI_Send(message, strlen(message)+1, MPI_CHAR, my_rank+1, 0, MPI_COMM_WORLD);
+    message = min;
+    MPI_Send(&message, 1, MPI_INT, my_rank+1, 0, MPI_COMM_WORLD);
+    message = max;
+    MPI_Send(&message, 1, MPI_INT, my_rank+1, 0, MPI_COMM_WORLD);
+    MPI_Recv(&message, 1, MPI_INT, comm_sz-1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    MPI_Recv(&message, 1, MPI_INT, comm_sz-1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
   }
   else{
-    MPI_Recv(message, MAX_STRING, MPI_CHAR, my_rank-1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    min = atoi(message);
-    MPI_Recv(message, MAX_STRING, MPI_CHAR, my_rank-1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    max = atoi(message);
-    printf("--------rank-%02d-------- min - %d max - %d\n", my_rank, min, max);
-    sprintf(message, "%d", min);
-    MPI_Send(message, strlen(message)+1, MPI_CHAR, (my_rank+1) % comm_sz, 0, MPI_COMM_WORLD);
-    sprintf(message, "%d", max);
-    MPI_Send(message, strlen(message)+1, MPI_CHAR, (my_rank+1) % comm_sz, 0, MPI_COMM_WORLD);
+    MPI_Recv(&message, 1, MPI_INT, my_rank-1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    min = message;
+    MPI_Recv(&message, 1, MPI_INT, my_rank-1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    max = message;
+    //printf("--------rank-%02d-------- min - %d max - %d\n", my_rank, min, max);
+    message = min;
+    MPI_Send(&message, 1, MPI_INT, (my_rank+1) % comm_sz, 0, MPI_COMM_WORLD);
+    message = max;
+    MPI_Send(&message, 1, MPI_INT, (my_rank+1) % comm_sz, 0, MPI_COMM_WORLD);
   }
-  
+  local_finish = MPI_Wtime();
+  local_elapsed = local_finish - local_start;
+  MPI_Reduce(&local_elapsed, &elapsed2, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
   MPI_Finalize();
+  if (my_rank == 0)
+    printf("%f\n", (elapsed+elapsed2)/2.0);
   return 0;
 }
